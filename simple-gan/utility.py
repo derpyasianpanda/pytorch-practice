@@ -1,7 +1,8 @@
 # Utility Functions
-from math import log2
 from random import randint
 
+def bits_to_int(bits):
+    return int(sum([2 ** (len(bits) - i - 1) * bit for (i, bit) in enumerate(bits)]))
 
 def int_to_bits(number, bit_len=0):
     bits = [int(bit) for bit in list(bin(number))[2:]]
@@ -10,11 +11,11 @@ def int_to_bits(number, bit_len=0):
     return bits
 
 
-def generate_evens(max, amount):
-    labels = [0] * amount
+def generate_evens(bit_len, amount):
+    labels = [1] * amount
     data = [
-        int_to_bits(number, int(log2(max)))
+        int_to_bits(number, bit_len)
         for number
-        in [randint(0, max + 1) for _ in range(amount)]
+        in [randint(0, ((2 ** bit_len) - 1) // 2) * 2 for _ in range(amount)]
     ]
     return labels, data
