@@ -27,10 +27,10 @@ def train(
 
     for epoch in range(epochs):
         # Generating test data for each epoch (training step)
-        test_labels, test_data = generate_evens(bit_len, batch_size)
+        train_labels, train_features = generate_evens(bit_len, batch_size)
         # The labels are put under a view b/c the loss function requires the extra batch_size x 1 size
-        test_labels, test_data = \
-            tensor(test_labels).float().view(batch_size, 1), tensor(test_data).float()
+        train_labels, train_features = \
+            tensor(train_labels).float().view(batch_size, 1), tensor(train_features).float()
 
         # Begin training the generator
         generator_optimizer.zero_grad()
@@ -44,7 +44,7 @@ def train(
         discriminate_generated = discriminator(generated_data)
 
         # Calculate generator loss and update the model
-        generator_loss = loss(discriminate_generated, test_labels)
+        generator_loss = loss(discriminate_generated, train_labels)
         generator_loss.backward()
         generator_optimizer.step()
 
@@ -52,15 +52,16 @@ def train(
         discriminator_optimizer.zero_grad()
 
         # Train the discriminator with the test data and calculate the loss
-        test_discriminator_results = discriminator(test_data)
-        test_discriminator_loss = loss(test_discriminator_results, test_labels)
+        train_discriminator_results = discriminator(train_features)
+        train_discriminator_loss = loss(train_discriminator_results, train_labels)
 
         # Train the discriminator with the generated data and the loss as if the generated output should have all been wrong
+        # We detached the data b/c we no longer want to associate the generated data with the generator
         discriminate_generated = discriminator(generated_data.detach())
         generator_discriminator_loss = loss(discriminate_generated, torch.zeros(batch_size, 1))
 
         # Take average loss against generator and against test data and update the model
-        discriminator_loss = (test_discriminator_loss + generator_discriminator_loss) / 2
+        discriminator_loss = (train_discriminator_loss + generator_discriminator_loss) / 2
         discriminator_loss.backward()
         discriminator_optimizer.step()
 
